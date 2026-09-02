@@ -115,6 +115,10 @@ check:
 	done
 	@plutil -lint "$(ROOT_DIR)/Packaging/fastfetch.entitlements"
 	@"$(ROOT_DIR)/Scripts/release-notes.sh" "v$(PACKAGE_VERSION)" >/dev/null
+	@test -L "$(ROOT_DIR)/CLAUDE.md" && [[ "$$(readlink "$(ROOT_DIR)/CLAUDE.md")" == AGENTS.md ]] || \
+		{ echo "error: CLAUDE.md must be a symlink to AGENTS.md" >&2; exit 65; }
+	@echo "==> sensitive information"
+	@"$(ROOT_DIR)/Scripts/check-sensitive.sh"
 	@echo "ok"
 
 source:

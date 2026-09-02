@@ -1,3 +1,1 @@
-# fastfetch — Agent Notes
-
-See [AGENTS.md](AGENTS.md).
+AGENTS.md

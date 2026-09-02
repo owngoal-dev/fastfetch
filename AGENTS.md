@@ -33,6 +33,15 @@ local checkout execute the same code.
 - **Do not link libvroot.** This is a plain C binary talking to libSystem; the
   path derivation above replaces vroot's rewriting for the few paths that
   matter.
+- **`CLAUDE.md` is a symlink to `AGENTS.md`**, never a file of its own. One
+  set of notes, two names; `make check` enforces it.
+- **Review for sensitive information before anything is uploaded or
+  published.** `Scripts/check-sensitive.sh` scans tracked files, the staged
+  package tree and the finished `.deb`s for credentials, private keys, home
+  and scratch paths, device identifiers, IP addresses and e-mail addresses.
+  `make check`, `package-deb.sh` and the Release workflow all run it and
+  stop on a hit. A deliberate public value goes on its allowlist; a rule is
+  never loosened.
 
 ## How the iOS port works
 
