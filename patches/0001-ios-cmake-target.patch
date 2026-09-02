@@ -1,0 +1,71 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 191eed4..6d9d120 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1102,6 +1102,48 @@ elseif(APPLE)
+             src/detection/physicalmemory/physicalmemory_apple.m
+         )
+     endif()
++    if(IOS)
++        # iOS has no AppKit, CoreWLAN, IOBluetooth, CoreAudio HAL, CoreDisplay,
++        # KextManager or AppleScript. Swap the detectors that need them for the
++        # portable fallbacks, and the ones that have an iOS answer for iOS files.
++        list(REMOVE_ITEM LIBFASTFETCH_SRC
++            src/common/impl/kmod_apple.c
++            src/detection/bluetooth/bluetooth_apple.m
++            src/detection/bluetoothradio/bluetoothradio_apple.m
++            src/detection/brightness/brightness_apple.c
++            src/detection/camera/camera_apple.m
++            src/detection/displayserver/displayserver_apple.c
++            src/detection/dns/dns_apple.c
++            src/detection/font/font_apple.m
++            src/detection/media/media_apple.m
++            src/detection/opengl/opengl_apple.c
++            src/detection/os/os_apple.m
++            src/detection/packages/packages_apple.c
++            src/detection/packages/packages_nix.c
++            src/detection/sound/sound_apple.c
++            src/detection/wallpaper/wallpaper_apple.m
++            src/detection/wifi/wifi_apple.m
++            src/detection/wm/wm_apple.m
++        )
++        list(APPEND LIBFASTFETCH_SRC
++            src/common/impl/kmod_nosupport.c
++            src/detection/bluetooth/bluetooth_nosupport.c
++            src/detection/bluetoothradio/bluetoothradio_nosupport.c
++            src/detection/brightness/brightness_nosupport.c
++            src/detection/camera/camera_nosupport.c
++            src/detection/displayserver/displayserver_ios.c
++            src/detection/dns/dns_linux.c
++            src/detection/font/font_nosupport.c
++            src/detection/media/media_nosupport.c
++            src/detection/opengl/opengl_ios.c
++            src/detection/os/os_ios.m
++            src/detection/packages/packages_ios.c
++            src/detection/sound/sound_nosupport.c
++            src/detection/wallpaper/wallpaper_nosupport.c
++            src/detection/wifi/wifi_nosupport.c
++            src/detection/wm/wm_nosupport.c
++        )
++    endif()
+ elseif(WIN32)
+     list(APPEND LIBFASTFETCH_SRC
+         src/common/impl/io_windows.c
+@@ -1924,6 +1966,17 @@ if(LINUX)
+             )
+         endif()
+     endif()
++elseif(IOS)
++    target_link_libraries(libfastfetch
++        PRIVATE "-framework CoreFoundation"
++        PRIVATE "-framework CoreMedia"
++        PRIVATE "-framework CoreVideo"
++        PRIVATE "-framework Foundation"
++        PRIVATE "-framework IOKit"
++        PRIVATE "-framework Metal"
++        PRIVATE "-framework SystemConfiguration"
++        PRIVATE "-framework VideoToolbox"
++    )
+ elseif(APPLE)
+     target_link_libraries(libfastfetch
+         PRIVATE "-framework AVFoundation"

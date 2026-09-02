@@ -1,0 +1,124 @@
+diff --git a/src/common/apple/osascript.m b/src/common/apple/osascript.m
+index f17af03..28165b7 100644
+--- a/src/common/apple/osascript.m
++++ b/src/common/apple/osascript.m
+@@ -4,6 +4,11 @@
+ 
+ bool ffOsascript(const char* input, FFstrbuf* result)
+ {
++#if TARGET_OS_IPHONE
++    // No AppleScript on iOS
++    (void) input; (void) result;
++    return false;
++#else
+     NSAppleScript* script = [NSAppleScript.alloc initWithSource:@(input)];
+     NSDictionary* errInfo = nil;
+     NSAppleEventDescriptor* descriptor = [script executeAndReturnError:&errInfo];
+@@ -12,4 +17,5 @@ bool ffOsascript(const char* input, FFstrbuf* result)
+ 
+     ffStrbufSetS(result, descriptor.stringValue.UTF8String);
+     return true;
++#endif
+ }
+diff --git a/src/detection/gpu/gpu_apple.m b/src/detection/gpu/gpu_apple.m
+index 9596dbe..debf2f6 100644
+--- a/src/detection/gpu/gpu_apple.m
++++ b/src/detection/gpu/gpu_apple.m
+@@ -1,7 +1,9 @@
+ #include "gpu.h"
+ 
+ #import <Metal/MTLDevice.h>
+-#import <IOKit/kext/KextManager.h>
++#if !TARGET_OS_IPHONE
++    #import <IOKit/kext/KextManager.h>
++#endif
+ 
+ #ifndef MAC_OS_VERSION_26_0
+     #define MTLGPUFamilyMetal4 ((MTLGPUFamily) 5002)
+@@ -15,6 +17,10 @@
+ #endif
+ 
+ const char* ffGpuDetectDriverVersion(FFlist* gpus) {
++#if TARGET_OS_IPHONE
++    (void) gpus;
++    return "KextManager is not available on iOS";
++#else
+     NSMutableArray* arr = NSMutableArray.new;
+     FF_LIST_FOR_EACH (FFGPUResult, x, *gpus) {
+         [arr addObject:@(x->driver.chars)];
+@@ -29,12 +35,20 @@ const char* ffGpuDetectDriverVersion(FFlist* gpus) {
+         }
+     }
+     return nullptr;
++#endif
+ }
+ 
+ const char* ffGpuDetectMetal(FFlist* gpus) {
++#if TARGET_OS_IPHONE
++    // MTLCopyAllDevices needs iOS 18; every iOS device has exactly one GPU anyway.
++    id<MTLDevice> defaultDevice = MTLCreateSystemDefaultDevice();
++    NSArray<id<MTLDevice>>* devices = defaultDevice ? @[ defaultDevice ] : @[];
++#else
+     // Metal.framework is statically linked into the application,
+     // so `MTLCopyAllDevices` is always available, or the application will not start.
+-    for (id<MTLDevice> device in MTLCopyAllDevices()) {
++    NSArray<id<MTLDevice>>* devices = MTLCopyAllDevices();
++#endif
++    for (id<MTLDevice> device in devices) {
+         FFGPUResult* gpu = nullptr;
+         FF_LIST_FOR_EACH (FFGPUResult, x, *gpus) {
+             if (x->deviceId == device.registryID) {
+@@ -70,11 +84,16 @@ const char* ffGpuDetectMetal(FFlist* gpus) {
+         }
+ 
+         gpu->type = device.hasUnifiedMemory ? FF_GPU_TYPE_INTEGRATED : FF_GPU_TYPE_DISCRETE;
++    #if TARGET_OS_OSX
+         gpu->index = (uint32_t) device.locationNumber;
++    #endif
+ 
++    #pragma clang diagnostic push
++    #pragma clang diagnostic ignored "-Wunguarded-availability-new" // iOS 16+
+         if (device.hasUnifiedMemory && device.recommendedMaxWorkingSetSize > 0) {
+             gpu->shared.total = device.recommendedMaxWorkingSetSize;
+         }
++    #pragma clang diagnostic pop
+ #endif
+     }
+     return nullptr;
+diff --git a/src/detection/opencl/opencl.c b/src/detection/opencl/opencl.c
+index 5bb195e..7bcb5b3 100644
+--- a/src/detection/opencl/opencl.c
++++ b/src/detection/opencl/opencl.c
+@@ -1,7 +1,7 @@
+ #include "detection/opencl/opencl.h"
+ #include "detection/gpu/gpu.h"
+ 
+-#if !defined(FF_HAVE_OPENCL) && defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_15)
++#if !defined(FF_HAVE_OPENCL) && defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_15) && __has_include(<OpenCL/cl.h>)
+     #define FF_HAVE_OPENCL 1
+ #endif
+ 
+diff --git a/src/detection/opengl/opengl_shared.c b/src/detection/opengl/opengl_shared.c
+index b3fc230..8f3f788 100644
+--- a/src/detection/opengl/opengl_shared.c
++++ b/src/detection/opengl/opengl_shared.c
+@@ -5,7 +5,7 @@
+ 
+ #if __has_include(<GL/gl.h>)
+     #include <GL/gl.h>
+-#elif __APPLE__
++#elif __has_include(<OpenGL/gl.h>) // macOS; the iOS SDK has no OpenGL
+     #define GL_SILENCE_DEPRECATION 1
+     #include <OpenGL/gl.h>
+ #else
+diff --git a/src/detection/sound/sound_nosupport.c b/src/detection/sound/sound_nosupport.c
+index b04530f..772fcc1 100644
+--- a/src/detection/sound/sound_nosupport.c
++++ b/src/detection/sound/sound_nosupport.c
+@@ -1,5 +1,5 @@
+ #include "sound.h"
+ 
+-const char* ffDetectSound([[maybe_unused]] FFlist* devices /* List of FFSoundDevice */) {
++const char* ffDetectSound([[maybe_unused]] FFSoundOptions* options, [[maybe_unused]] FFlist* devices /* List of FFSoundDevice */) {
+     return "Not supported on this platform";
+ }
