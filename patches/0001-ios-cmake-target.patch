@@ -1,8 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 191eed4..6d9d120 100644
+index 191eed4..8c8bf74 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1102,6 +1102,48 @@ elseif(APPLE)
+@@ -1102,6 +1102,49 @@ elseif(APPLE)
              src/detection/physicalmemory/physicalmemory_apple.m
          )
      endif()
@@ -30,6 +30,7 @@ index 191eed4..6d9d120 100644
 +            src/detection/wm/wm_apple.m
 +        )
 +        list(APPEND LIBFASTFETCH_SRC
++            src/common/apple/chip_ios.c
 +            src/common/impl/kmod_nosupport.c
 +            src/detection/bluetooth/bluetooth_nosupport.c
 +            src/detection/bluetoothradio/bluetoothradio_nosupport.c
@@ -51,7 +52,7 @@ index 191eed4..6d9d120 100644
  elseif(WIN32)
      list(APPEND LIBFASTFETCH_SRC
          src/common/impl/io_windows.c
-@@ -1924,6 +1966,17 @@ if(LINUX)
+@@ -1924,6 +1967,17 @@ if(LINUX)
              )
          endif()
      endif()

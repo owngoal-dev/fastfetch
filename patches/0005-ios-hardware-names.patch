@@ -1,0 +1,226 @@
+diff --git a/src/detection/chassis/chassis_apple.c b/src/detection/chassis/chassis_apple.c
+index b5a041d..8ac3d3d 100644
+--- a/src/detection/chassis/chassis_apple.c
++++ b/src/detection/chassis/chassis_apple.c
+@@ -1,6 +1,8 @@
+ #include "chassis.h"
+ #include "detection/host/host.h"
+ 
++#include <TargetConditionals.h>
++
+ const char* ffDetectChassis(FFChassisResult* result) {
+     FFHostResult host = {
+         .family = ffStrbufCreate(),
+@@ -15,6 +17,13 @@ const char* ffDetectChassis(FFChassisResult* result) {
+         return "Failed to detect host";
+     }
+ 
++#if TARGET_OS_IPHONE
++    if (ffStrbufStartsWithS(&host.family, "iPad")) {
++        ffStrbufSetStatic(&result->type, "Tablet");
++    } else if (ffStrbufStartsWithS(&host.family, "iPhone") || ffStrbufStartsWithS(&host.family, "iPod")) {
++        ffStrbufSetStatic(&result->type, "Handset");
++    } else
++#endif
+     if (ffStrbufStartsWithS(&host.name, "MacBook ")) {
+         ffStrbufSetStatic(&result->type, "Laptop");
+     } else if (ffStrbufStartsWithS(&host.name, "Mac mini ") ||
+diff --git a/src/detection/cpu/cpu.c b/src/detection/cpu/cpu.c
+index a796175..6680d5c 100644
+--- a/src/detection/cpu/cpu.c
++++ b/src/detection/cpu/cpu.c
+@@ -32,7 +32,37 @@ const char* ffDetectCPU(const FFCPUOptions* options, FFCPUResult* cpu) {
+ 
+ const char* ffCPUAppleCodeToName(uint32_t code) {
+     // https://github.com/AsahiLinux/docs/wiki/Codenames
++    // iPhone/iPad SoCs: https://theapplewiki.com/wiki/Application_Processor
+     switch (code) {
++        case 8000:
++        case 8003:
++            return "Apple A9";
++        case 8001:
++            return "Apple A9X";
++        case 8010:
++            return "Apple A10 Fusion";
++        case 8011:
++            return "Apple A10X Fusion";
++        case 8015:
++            return "Apple A11 Bionic";
++        case 8020:
++            return "Apple A12 Bionic";
++        case 8027:
++            return "Apple A12X Bionic"; // A12Z shares the die; told apart by hw.machine
++        case 8030:
++            return "Apple A13 Bionic";
++        case 8101:
++            return "Apple A14 Bionic";
++        case 8110:
++            return "Apple A15 Bionic";
++        case 8120:
++            return "Apple A16 Bionic";
++        case 8130:
++            return "Apple A17 Pro";
++        case 8140:
++            return "Apple A18";
++        case 8150:
++            return "Apple A18 Pro";
+         case 8103:
+             return "Apple M1";
+         case 6000:
+diff --git a/src/detection/cpu/cpu_apple.c b/src/detection/cpu/cpu_apple.c
+index bce7d55..1b6bebb 100644
+--- a/src/detection/cpu/cpu_apple.c
++++ b/src/detection/cpu/cpu_apple.c
+@@ -3,6 +3,11 @@
+ #include "common/apple/smc_temps.h"
+ #include "common/strutil.h"
+ 
++#include <TargetConditionals.h>
++#if TARGET_OS_IPHONE
++    #include "common/apple/chip_ios.h"
++#endif
++
+ static double detectCpuTemp(const FFCPUOptions* options, const FFstrbuf* cpuName) {
+     double result = 0;
+ 
+@@ -127,6 +132,12 @@ const char* ffDetectCPUImpl(const FFCPUOptions* options, FFCPUResult* cpu) {
+     if (ffSysctlGetString("machdep.cpu.brand_string", &cpu->name) != nullptr) {
+         return "sysctlbyname(machdep.cpu.brand_string) failed";
+     }
++#if TARGET_OS_IPHONE
++    // iOS reports the literal "Apple processor"; name the SoC from the device tree.
++    if (ffStrbufEqualS(&cpu->name, "Apple processor")) {
++        ffAppleChipName(&cpu->name);
++    }
++#endif
+ 
+     ffSysctlGetString("machdep.cpu.vendor", &cpu->vendor);
+     cpu->packages = (uint16_t) ffSysctlGetInt("hw.packages", 1);
+diff --git a/src/detection/gpu/gpu_apple.c b/src/detection/gpu/gpu_apple.c
+index f3775bc..7140d4f 100644
+--- a/src/detection/gpu/gpu_apple.c
++++ b/src/detection/gpu/gpu_apple.c
+@@ -3,6 +3,10 @@
+ #include "common/apple/smc_temps.h"
+ 
+ #include <IOKit/graphics/IOGraphicsLib.h>
++#include <TargetConditionals.h>
++#if TARGET_OS_IPHONE
++    #include "common/apple/chip_ios.h"
++#endif
+ 
+ const char* ffGpuDetectMetal(FFlist* gpus);
+ const char* ffGpuDetectDriverVersion(FFlist* gpus);
+@@ -98,8 +102,14 @@ static const char* detectFrequency(FFGPUResult* gpu) {
+ const char* ffDetectGPUImpl(const FFGPUOptions* options, FFlist* gpus) {
+     FF_IOOBJECT_AUTO_RELEASE io_iterator_t iterator = IO_OBJECT_NULL;
+     {
++#if TARGET_OS_IPHONE
++        // The iOS GPU driver registers as AGXAccelerator<gen> in category
++        // IOAcceleratorES; there is no IOAccelerator base class to match.
++        CFMutableDictionaryRef matches = IOServiceMatching("AGXAccelerator");
++#else
+         CFMutableDictionaryRef matches = IOServiceMatching(kIOAcceleratorClassName);
+         CFDictionaryAddValue(matches, CFSTR("IOMatchCategory"), CFSTR(kIOAcceleratorClassName));
++#endif
+         if (IOServiceGetMatchingServices(MACH_PORT_NULL, matches, &iterator) != kIOReturnSuccess) {
+             return "IOServiceGetMatchingServices() failed";
+         }
+@@ -128,6 +138,12 @@ const char* ffDetectGPUImpl(const FFGPUOptions* options, FFlist* gpus) {
+ 
+         if (ffCfDictGetInt(properties, CFSTR("gpu-core-count"), &gpu->coreCount) != nullptr) { // For Apple
+             gpu->coreCount = FF_GPU_CORE_COUNT_UNSET;
++#if TARGET_OS_IPHONE
++            CFDictionaryRef configuration;
++            if (ffCfDictGetDict(properties, CFSTR("GPUConfigurationVariable"), &configuration) == nullptr) {
++                ffCfDictGetInt(configuration, CFSTR("num_cores"), &gpu->coreCount);
++            }
++#endif
+         }
+ 
+         gpu->coreUsage = FF_GPU_CORE_USAGE_UNSET;
+@@ -195,6 +211,24 @@ const char* ffDetectGPUImpl(const FFGPUOptions* options, FFlist* gpus) {
+                 gpu->dedicated.used = vramUsed;
+             }
+         }
++#if TARGET_OS_IPHONE
++        else {
++            // No model / vendor-id on iOS: the GPU is the SoC's, so name it after
++            // the chip the way Metal does ("Apple A12Z GPU").
++            if (ffAppleChipName(&gpu->name) == nullptr) {
++                const char* suffixes[] = { " Bionic", " Fusion" };
++                ffStrbufRemoveStrings(&gpu->name, ARRAY_SIZE(suffixes), suffixes);
++                ffStrbufAppendS(&gpu->name, " GPU");
++            } else {
++                ffStrbufSetS(&gpu->name, "Apple GPU");
++            }
++            ffStrbufSetStatic(&gpu->vendor, FF_GPU_VENDOR_NAME_APPLE);
++            gpu->type = FF_GPU_TYPE_INTEGRATED;
++            gpu->shared.total = vramTotal;
++            gpu->shared.used = vramUsed;
++            detectFrequency(gpu);
++        }
++#endif
+ 
+         gpu->temperature = options->temp ? detectGpuTemp(&gpu->name) : FF_GPU_TEMP_UNSET;
+ 
+diff --git a/src/detection/gpu/gpu_apple.m b/src/detection/gpu/gpu_apple.m
+index 9596dbe..3cceebf 100644
+--- a/src/detection/gpu/gpu_apple.m
++++ b/src/detection/gpu/gpu_apple.m
+@@ -1,7 +1,9 @@
+ #include "gpu.h"
+ 
+ #import <Metal/MTLDevice.h>
+-#import <IOKit/kext/KextManager.h>
++#if !TARGET_OS_IPHONE
++    #import <IOKit/kext/KextManager.h>
++#endif
+ 
+ #ifndef MAC_OS_VERSION_26_0
+     #define MTLGPUFamilyMetal4 ((MTLGPUFamily) 5002)
+@@ -15,6 +17,10 @@
+ #endif
+ 
+ const char* ffGpuDetectDriverVersion(FFlist* gpus) {
++#if TARGET_OS_IPHONE
++    (void) gpus;
++    return "KextManager is not available on iOS";
++#else
+     NSMutableArray* arr = NSMutableArray.new;
+     FF_LIST_FOR_EACH (FFGPUResult, x, *gpus) {
+         [arr addObject:@(x->driver.chars)];
+@@ -29,9 +35,17 @@ const char* ffGpuDetectDriverVersion(FFlist* gpus) {
+         }
+     }
+     return nullptr;
++#endif
+ }
+ 
+ const char* ffGpuDetectMetal(FFlist* gpus) {
++#if TARGET_OS_IPHONE
++    // MTLCreateSystemDefaultDevice() returns nil for a command-line process on
++    // iOS (and MTLCopyAllDevices needs iOS 18); gpu_apple.c fills everything
++    // from the AGXAccelerator IORegistry entry instead.
++    (void) gpus;
++    return "Metal is unavailable to command-line processes on iOS";
++#else
+     // Metal.framework is statically linked into the application,
+     // so `MTLCopyAllDevices` is always available, or the application will not start.
+     for (id<MTLDevice> device in MTLCopyAllDevices()) {
+@@ -70,7 +84,9 @@ const char* ffGpuDetectMetal(FFlist* gpus) {
+         }
+ 
+         gpu->type = device.hasUnifiedMemory ? FF_GPU_TYPE_INTEGRATED : FF_GPU_TYPE_DISCRETE;
++    #if TARGET_OS_OSX
+         gpu->index = (uint32_t) device.locationNumber;
++    #endif
+ 
+         if (device.hasUnifiedMemory && device.recommendedMaxWorkingSetSize > 0) {
+             gpu->shared.total = device.recommendedMaxWorkingSetSize;
+@@ -78,4 +94,5 @@ const char* ffGpuDetectMetal(FFlist* gpus) {
+ #endif
+     }
+     return nullptr;
++#endif
+ }

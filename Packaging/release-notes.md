@@ -19,7 +19,7 @@ Run `fastfetch` in a terminal on device. Your config goes in `~/.config/fastfetc
 
 ## About this build
 
-Upstream [`fastfetch-cli/fastfetch@@UPSTREAM_SHORT@`](https://github.com/fastfetch-cli/fastfetch/commit/@UPSTREAM_REF@), plus the patches that port it to iOS: an iOS CMake target, iOS implementations of the OS, display, packages and OpenGL detectors, and no-op fallbacks for the macOS-only ones (Wi-Fi, Bluetooth, sound, fonts, wallpaper, media, brightness, camera). See [`patches/`](https://github.com/OwnGoalStudio/fastfetch/tree/@TAG@/patches).
+Upstream [`fastfetch-cli/fastfetch@@UPSTREAM_SHORT@`](https://github.com/fastfetch-cli/fastfetch/commit/@UPSTREAM_REF@), plus the patches that port it to iOS: an iOS CMake target, iOS implementations of the OS, display, packages, CPU/GPU naming and chassis detectors, and no-op fallbacks for the macOS-only ones (Wi-Fi, Bluetooth, sound, fonts, wallpaper, media, brightness, camera, OpenGL). See [`patches/`](https://github.com/OwnGoalStudio/fastfetch/tree/@TAG@/patches).
 
 Verify your download against `SHA256SUMS`.
 

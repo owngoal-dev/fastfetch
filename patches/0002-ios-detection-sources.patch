@@ -1,3 +1,65 @@
+diff --git a/src/common/apple/chip_ios.c b/src/common/apple/chip_ios.c
+new file mode 100644
+index 0000000..f82c020
+--- /dev/null
++++ b/src/common/apple/chip_ios.c
+@@ -0,0 +1,44 @@
++#include "chip_ios.h"
++#include "cf_helpers.h"
++#include "common/sysctl.h"
++#include "detection/cpu/cpu.h"
++
++#include <IOKit/IOKitLib.h>
++#include <stdio.h>
++#include <stdlib.h>
++
++// iOS reports the literal "Apple processor" as CPU brand string and gives a
++// command-line process no Metal device, so both the CPU and the GPU name come
++// from the SoC id in the device tree: chosen/chip-id holds e.g. 0x8027, the
++// same number Asahi's "apple,t8027" compatible string carries, so the shared
++// code table applies.
++const char* ffAppleChipName(FFstrbuf* result) {
++    FF_IOOBJECT_AUTO_RELEASE io_registry_entry_t chosen = IORegistryEntryFromPath(MACH_PORT_NULL, "IODeviceTree:/chosen");
++    if (!chosen) {
++        return "IORegistryEntryFromPath(IODeviceTree:/chosen) failed";
++    }
++    FF_CFTYPE_AUTO_RELEASE CFDataRef chipId = IORegistryEntryCreateCFProperty(chosen, CFSTR("chip-id"), kCFAllocatorDefault, kNilOptions);
++    if (!chipId || CFGetTypeID(chipId) != CFDataGetTypeID() || CFDataGetLength(chipId) < 4) {
++        return "chosen/chip-id is missing";
++    }
++    uint32_t code = 0;
++    CFDataGetBytes(chipId, CFRangeMake(0, 4), (uint8_t*) &code);
++
++    char decimal[16];
++    snprintf(decimal, sizeof(decimal), "%x", code);
++    const char* chipName = ffCPUAppleCodeToName((uint32_t) strtoul(decimal, nullptr, 10));
++    if (!chipName) {
++        return "unknown chip-id";
++    }
++    ffStrbufSetS(result,chipName);
++
++    if (code == 0x8027) {
++        FF_STRBUF_AUTO_DESTROY machine = ffStrbufCreate();
++        ffSysctlGetString("hw.machine", &machine);
++        // iPad8,9-12 are the 2020 iPad Pros with the A12Z; iPad8,1-8 have the A12X
++        if (ffStrbufStartsWithS(&machine, "iPad8,") && strtoul(machine.chars + strlen("iPad8,"), nullptr, 10) >= 9) {
++            ffStrbufSetS(result,"Apple A12Z Bionic");
++        }
++    }
++    return nullptr;
++}
+diff --git a/src/common/apple/chip_ios.h b/src/common/apple/chip_ios.h
+new file mode 100644
+index 0000000..ace299c
+--- /dev/null
++++ b/src/common/apple/chip_ios.h
+@@ -0,0 +1,6 @@
++#pragma once
++
++#include "fastfetch.h"
++
++// Marketing name of the SoC, e.g. "Apple A12Z Bionic". Empty if unknown.
++const char* ffAppleChipName(FFstrbuf* result);
 diff --git a/src/detection/displayserver/displayserver_ios.c b/src/detection/displayserver/displayserver_ios.c
 new file mode 100644
 index 0000000..96a1937

@@ -47,17 +47,27 @@ Upstream has no iOS target; `if(APPLE)` means macOS. The port is four patches:
   `displayserver_ios.c` (panel size, scale and PPI from MobileGestalt's
   unprotected `main-screen-*` keys; WM reported as SpringBoard),
   `packages_ios.c` (dpkg count from the bootstrap's status file),
-  `opengl_ios.c` (unsupported).
+  `opengl_ios.c` (unsupported), `common/apple/chip_ios.c` (SoC name from
+  the device tree's `chosen/chip-id`, e.g. 0x8027 → "Apple A12Z Bionic",
+  via upstream's Asahi code table extended with the A-series).
 - `0003-ios-sdk-guards` — `TARGET_OS_IPHONE` / `__has_include` guards in
-  shared Apple files (AppleScript, OpenGL/OpenCL headers, Metal's
-  `MTLCopyAllDevices` which is iOS 18+, KextManager) plus the upstream
+  shared Apple files (AppleScript, OpenGL/OpenCL headers) plus the upstream
   `sound_nosupport.c` signature fix.
 - `0004-ios-bootstrap-config-dir` — `<bootstrap>/etc/` added to the config
   search path, derived from the executable path.
+- `0005-ios-hardware-names` — the kernel's CPU brand string on iOS is the
+  literal "Apple processor", `MTLCreateSystemDefaultDevice()` returns nil
+  for a command-line process, and there is no `IOAccelerator` class. CPU
+  and GPU are named from the chip id; the GPU entry is the `AGXAccelerator`
+  IORegistry service (core count from `GPUConfigurationVariable/num_cores`,
+  usage and memory from `PerformanceStatistics`, clock from `pmgr` like on
+  macOS). Chassis is Tablet/Handset by `hw.machine`. KextManager and Metal
+  are compiled out on iOS.
 
-Everything else Apple-flavoured (CPU, GPU via IOKit + Metal, memory, battery,
-power adapter, disks, network, processes, terminal/shell walk) compiles and
-links unchanged — the iPhoneOS SDK just omits the headers. `build-ios.sh`
+Everything else Apple-flavoured (memory, battery, power adapter, disks,
+network, processes, host name via `IODeviceTree:/product`, terminal/shell
+walk) compiles and links unchanged — the iPhoneOS SDK just omits the headers.
+`build-ios.sh`
 symlinks the missing headers (libproc, routing sysctls, most of IOKit) from
 the macOS SDK into a shim include dir. Only headers the iOS SDK lacks go in
 the shim, so the iOS SDK's own declarations keep winning.
@@ -66,9 +76,16 @@ Two SDK traps, both handled in `build-ios.sh`:
 
 - The iOS 27 SDK declares `pipe2`, so CMake's `check_function_exists` says
   yes, but no device before iOS 27 has it. `HAVE_PIPE2=0` is pinned.
-- Any API newer than `MIN_IOS` is weak-linked and NULL on older devices. The
+- Any C API newer than `MIN_IOS` is weak-linked and NULL on older devices. The
   build script lists weak imports; every one must be null-checked in source
   (currently only `VTRegisterSupplementalVideoDecoderIfAvailable`, which is).
+  Objective-C methods newer than `MIN_IOS` are worse: no weak symbol, just an
+  unrecognized-selector crash. Guard them with `@available`, never by
+  silencing `-Wunguarded-availability-new`.
+
+Verified on device: iPad Pro 11" (2nd gen, A12Z), iPadOS 18.5, rootless
+Dopamine. The roothide package is the same binary in the other layout and
+has not been installed on a roothide device yet.
 
 Detectors that are intentionally `nosupport` on iOS: Wi-Fi, Bluetooth,
 sound, font, wallpaper, media, brightness, camera, kernel modules, OpenGL,
