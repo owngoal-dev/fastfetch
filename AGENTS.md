@@ -6,13 +6,13 @@ system information tool — built for jailbroken iOS 15+ and installed as
 
 This repository holds **no application source**. It fetches fastfetch at a
 pinned commit, applies `patches/`, cross-compiles with CMake against the
-iPhoneOS SDK, and packages. Everything runs through `Scripts/`, so CI and a
+iPhoneOS SDK, and packages. Everything runs through `scripts/`, so CI and a
 local checkout execute the same code.
 
 ## Hard rules
 
 - **Not a fork.** Never vendor fastfetch source here. Every change to it is a
-  patch in `patches/`, applied by `Scripts/prepare-source.sh` to a fresh
+  patch in `patches/`, applied by `scripts/prepare-source.sh` to a fresh
   checkout of `UPSTREAM_REF`. Keep patches small and single-purpose.
 - **`UPSTREAM_REF` is a full commit sha**, not a branch. Bump with
   `make bump-upstream REF=…`.
@@ -27,7 +27,7 @@ local checkout execute the same code.
   and probes fixed candidates only as a fallback. That is how it finds
   `<bootstrap>/etc/fastfetch`, its presets, and dpkg's status file on
   rootless, RootHide and rootful alike.
-- **Versions live in `Configuration/version.txt` only.** `X.Y.Z` must equal
+- **Versions live in `configuration/version.txt` only.** `X.Y.Z` must equal
   upstream's `project(fastfetch VERSION …)`; `prepare-source.sh` refuses a
   mismatch. `X.Y.Z-N` is a packaging-only respin.
 - **Do not link libvroot.** This is a plain C binary talking to libSystem; the
@@ -36,7 +36,7 @@ local checkout execute the same code.
 - **`CLAUDE.md` is a symlink to `AGENTS.md`**, never a file of its own. One
   set of notes, two names; `make check` enforces it.
 - **Review for sensitive information before anything is uploaded or
-  published.** `Scripts/check-sensitive.sh` scans tracked files, the staged
+  published.** `scripts/check-sensitive.sh` scans tracked files, the staged
   package tree and the finished `.deb`s for credentials, private keys, home
   and scratch paths, device identifiers, IP addresses and e-mail addresses.
   `make check`, `package-deb.sh` and the Release workflow all run it and
@@ -103,16 +103,16 @@ OpenCL. Adding one back means an iOS implementation, not a macOS framework.
 ## Layout
 
 ```
-Configuration/upstream.env   pinned ref, program name, iOS floor
-Configuration/version.txt    package version
+configuration/upstream.env   pinned ref, program name, iOS floor
+configuration/version.txt    package version
 patches/NNNN-*.patch         applied in sorted order to a pristine checkout
-Packaging/DEBIAN/control     control template (@PLACEHOLDER@ substituted)
-Packaging/fastfetch.entitlements  what the signed binary carries, and why
-Packaging/release-notes.md   GitHub Release body template
-Scripts/prepare-source.sh    fetch + patch (idempotent, stamped)
-Scripts/build-ios.sh         SDK shim + cmake + verify Mach-O + install payload
-Scripts/package-deb.sh       stage + ldid + dpkg-deb + verify
-Scripts/install-device.sh    install over SSH and smoke-test (dev only)
+packaging/DEBIAN/control     control template (@PLACEHOLDER@ substituted)
+packaging/fastfetch.entitlements  what the signed binary carries, and why
+packaging/release-notes.md   GitHub Release body template
+scripts/prepare-source.sh    fetch + patch (idempotent, stamped)
+scripts/build-ios.sh         SDK shim + cmake + verify Mach-O + install payload
+scripts/package-deb.sh       stage + ldid + dpkg-deb + verify
+scripts/install-device.sh    install over SSH and smoke-test (dev only)
 build/                       everything generated; not source
 ```
 
@@ -133,7 +133,7 @@ binary runs with its entitlements ignored (trustcache never saw it).
 Same as kk: a non-draft, non-prerelease tag `vX.Y.Z`; assets whose names end
 in `iphoneos-arm64.deb` / `iphoneos-arm64e.deb`; a `SHA256SUMS` of bare names.
 
-`Follow upstream` runs every Monday at 00:00 UTC: pin to the newest stable
+`Follow upstream` runs every day at 00:00 UTC: pin to the newest stable
 `fastfetch-cli/fastfetch` `X.Y.Z` release, `make source` to prove `patches/`
 still apply, then commit and tag `vX.Y.Z` as `bot <bot@owngoal.dev>`.
 `Release` builds that tag. OwnGoalPackages fetches it at 04:00 UTC.
