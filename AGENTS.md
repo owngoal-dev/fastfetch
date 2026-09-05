@@ -150,3 +150,13 @@ dispatch `Release` on that tag (`gh workflow run release.yml --ref vX.Y.Z`):
 a tag pushed with the workflow's own token never fires a push-triggered
 workflow, and `workflow_dispatch` is the documented exception.
 OwnGoalPackages fetches the release at 04:00 UTC.
+
+## RootHide signing and launcher checks
+
+RootHide's official Developer README requires both
+`com.apple.private.security.storage.AppBundles` and
+`com.apple.private.security.storage.AppDataContainers`, in addition to the
+platform and no-sandbox entitlements. Keep these in the executable signature
+and verify the extracted signature after packaging; a correct package layout
+alone does not establish access to RootHide's app-container installation path.
+Source: https://github.com/roothide/Developer/blob/main/README.md
