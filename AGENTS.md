@@ -49,7 +49,7 @@ local checkout execute the same code.
 
 ## How the iOS port works
 
-Upstream has no iOS target; `if(APPLE)` means macOS. The port is four patches:
+Upstream has no iOS target; `if(APPLE)` means macOS. The port is six patches:
 
 - `0001-ios-cmake-target` — inside the Apple branch, `if(IOS)` swaps out the
   detectors that need AppKit, CoreWLAN, IOBluetooth, the CoreAudio HAL,
@@ -64,8 +64,8 @@ Upstream has no iOS target; `if(APPLE)` means macOS. The port is four patches:
   the device tree's `chosen/chip-id`, e.g. 0x8027 → "Apple A12Z Bionic",
   via upstream's Asahi code table extended with the A-series).
 - `0003-ios-sdk-guards` — `TARGET_OS_IPHONE` / `__has_include` guards in
-  shared Apple files (AppleScript, OpenGL/OpenCL headers) plus the upstream
-  `sound_nosupport.c` signature fix.
+  shared Apple files (AppleScript, OpenGL/OpenCL headers and the macOS-only
+  GameController/HID bridge). iOS keeps the IOHID gamepad detector.
 - `0004-ios-bootstrap-config-dir` — `<bootstrap>/etc/` added to the config
   search path, derived from the executable path.
 - `0005-ios-hardware-names` — the kernel's CPU brand string on iOS is the
@@ -76,6 +76,8 @@ Upstream has no iOS target; `if(APPLE)` means macOS. The port is four patches:
   usage and memory from `PerformanceStatistics`, clock from `pmgr` like on
   macOS). Chassis is Tablet/Handset by `hw.machine`. KextManager and Metal
   are compiled out on iOS.
+- `0006-ios-portable-fallbacks` — no-op font, media, sound and wallpaper
+  detectors removed by upstream 2.69.0, with the current function signatures.
 
 Everything else Apple-flavoured (memory, battery, power adapter, disks,
 network, processes, host name via `IODeviceTree:/product`, terminal/shell

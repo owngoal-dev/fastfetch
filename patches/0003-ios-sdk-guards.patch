@@ -1,5 +1,4 @@
 diff --git a/src/common/apple/osascript.m b/src/common/apple/osascript.m
-index f17af03..28165b7 100644
 --- a/src/common/apple/osascript.m
 +++ b/src/common/apple/osascript.m
 @@ -4,6 +4,11 @@
@@ -21,7 +20,6 @@ index f17af03..28165b7 100644
 +#endif
  }
 diff --git a/src/detection/opencl/opencl.c b/src/detection/opencl/opencl.c
-index 5bb195e..7bcb5b3 100644
 --- a/src/detection/opencl/opencl.c
 +++ b/src/detection/opencl/opencl.c
 @@ -1,7 +1,7 @@
@@ -34,7 +32,6 @@ index 5bb195e..7bcb5b3 100644
  #endif
  
 diff --git a/src/detection/opengl/opengl_shared.c b/src/detection/opengl/opengl_shared.c
-index b3fc230..8f3f788 100644
 --- a/src/detection/opengl/opengl_shared.c
 +++ b/src/detection/opengl/opengl_shared.c
 @@ -5,7 +5,7 @@
@@ -46,14 +43,76 @@ index b3fc230..8f3f788 100644
      #define GL_SILENCE_DEPRECATION 1
      #include <OpenGL/gl.h>
  #else
-diff --git a/src/detection/sound/sound_nosupport.c b/src/detection/sound/sound_nosupport.c
-index b04530f..772fcc1 100644
---- a/src/detection/sound/sound_nosupport.c
-+++ b/src/detection/sound/sound_nosupport.c
-@@ -1,5 +1,5 @@
- #include "sound.h"
+diff --git a/src/detection/gamepad/gamepad_apple.m b/src/detection/gamepad/gamepad_apple.m
+--- a/src/detection/gamepad/gamepad_apple.m
++++ b/src/detection/gamepad/gamepad_apple.m
+@@ -1,11 +1,13 @@
+ #include "gamepad.h"
+ #include "common/apple/cf_helpers.h"
  
--const char* ffDetectSound([[maybe_unused]] FFlist* devices /* List of FFSoundDevice */) {
-+const char* ffDetectSound([[maybe_unused]] FFSoundOptions* options, [[maybe_unused]] FFlist* devices /* List of FFSoundDevice */) {
-     return "Not supported on this platform";
++#import <Foundation/Foundation.h>
+ #include <IOKit/IOKitLib.h>
+ #include <IOKit/hid/IOHIDLib.h>
+-#include <GameController/GameController.h>
+-
+-#include <math.h>
++#if TARGET_OS_OSX
++    #include <GameController/GameController.h>
++    #include <math.h>
++#endif
+ 
+ // macOS offers two overlapping views of the same controller, and neither replaces the other:
+ //
+@@ -57,6 +59,7 @@
+ // not bound the handler, so it adds ~6 ms of its own. Paying 14 ms on a machine with no pad at all
+ // -- to learn what `supportsHIDDevice:` below already answered -- is why the kick is gone rather
+ // than merely deferred.
++#if TARGET_OS_OSX
+ #define GAMEPAD_GAMECONTROLLER_TIMEOUT_SECONDS 0.05
+ 
+ @interface GCController()
+@@ -157,11 +160,14 @@ static IOHIDDeviceRef findHIDDeviceForController(GCController* controller, NSSet
+     return nullptr;
  }
+ 
++#endif // TARGET_OS_OSX
++
+ typedef struct FFFindGamepadContext {
+     FFlist* devices;
+     uint32_t gameControllerCount;
+ } FFFindGamepadContext;
+ 
++#if TARGET_OS_OSX
+ // The GameController framework's own devices, and how many of them there were. `set` is the IOKit
+ // side, used only to borrow the serial -- see `findHIDDeviceForController()`.
+ static uint32_t findGameControllerDevices(FFlist* devices, NSSet* set) {
+@@ -244,7 +250,10 @@ static bool anyDeviceIsClaimedByGameController(NSSet* set) {
+     return false;
+ }
+ 
++#endif // TARGET_OS_OSX
++
+ static void enumSet(IOHIDDeviceRef value, FFFindGamepadContext* ctx) {
++#if TARGET_OS_OSX
+     // A device the framework owns is already in the list under its own name; see the note at the
+     // top for why this is conditional on the framework having contributed anything at all.
+     if (ctx->gameControllerCount > 0) {
+@@ -255,6 +264,8 @@ static void enumSet(IOHIDDeviceRef value, FFFindGamepadContext* ctx) {
+         }
+     }
+ 
++#endif // TARGET_OS_OSX
++
+     FFGamepadDevice* device = FF_LIST_ADD(FFGamepadDevice, *ctx->devices);
+     ffStrbufInit(&device->serial);
+     ffStrbufInit(&device->name);
+@@ -306,7 +317,9 @@ const char* ffDetectGamepad(FFlist* devices /* List of FFGamepadDevice */) {
+     // a reason to answer -- see `anyDeviceIsClaimedByGameController()`.
+     FFFindGamepadContext ctx = {
+         .devices = devices,
++#if TARGET_OS_OSX
+         .gameControllerCount = anyDeviceIsClaimedByGameController(set) ? findGameControllerDevices(devices, set) : 0,
++#endif
+     };
+ 
+     for (id value in set) {

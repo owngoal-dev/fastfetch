@@ -1,0 +1,40 @@
+diff --git a/src/detection/font/font_nosupport.c b/src/detection/font/font_nosupport.c
+new file mode 100644
+--- /dev/null
++++ b/src/detection/font/font_nosupport.c
+@@ -0,0 +1,5 @@
++#include "font.h"
++
++const char* ffDetectFontImpl([[maybe_unused]] FFFontResult* result) {
++    return "Not supported on this platform";
++}
+diff --git a/src/detection/media/media_nosupport.c b/src/detection/media/media_nosupport.c
+new file mode 100644
+--- /dev/null
++++ b/src/detection/media/media_nosupport.c
+@@ -0,0 +1,5 @@
++#include "media.h"
++
++void ffDetectMediaImpl(FFMediaResult* media, [[maybe_unused]] bool saveCover) {
++    ffStrbufAppendS(&media->error, "Not supported on this platform");
++}
+diff --git a/src/detection/sound/sound_nosupport.c b/src/detection/sound/sound_nosupport.c
+new file mode 100644
+--- /dev/null
++++ b/src/detection/sound/sound_nosupport.c
+@@ -0,0 +1,5 @@
++#include "sound.h"
++
++const char* ffDetectSound([[maybe_unused]] FFSoundOptions* options, [[maybe_unused]] FFlist* devices /* List of FFSoundDevice */) {
++    return "Not supported on this platform";
++}
+diff --git a/src/detection/wallpaper/wallpaper_nosupport.c b/src/detection/wallpaper/wallpaper_nosupport.c
+new file mode 100644
+--- /dev/null
++++ b/src/detection/wallpaper/wallpaper_nosupport.c
+@@ -0,0 +1,5 @@
++#include "wallpaper.h"
++
++const char* ffDetectWallpaper([[maybe_unused]] FFstrbuf* result) {
++    return "Not supported on this platform";
++}

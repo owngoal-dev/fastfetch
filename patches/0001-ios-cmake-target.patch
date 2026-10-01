@@ -1,8 +1,7 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 191eed4..8c8bf74 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1102,6 +1102,49 @@ elseif(APPLE)
+@@ -1086,6 +1086,49 @@ elseif(APPLE)
              src/detection/physicalmemory/physicalmemory_apple.m
          )
      endif()
@@ -52,17 +51,20 @@ index 191eed4..8c8bf74 100644
  elseif(WIN32)
      list(APPEND LIBFASTFETCH_SRC
          src/common/impl/io_windows.c
-@@ -1924,6 +1967,17 @@ if(LINUX)
+@@ -1933,6 +1976,20 @@ if(LINUX)
              )
          endif()
      endif()
 +elseif(IOS)
 +    target_link_libraries(libfastfetch
++        PRIVATE "-framework Accelerate"
 +        PRIVATE "-framework CoreFoundation"
++        PRIVATE "-framework CoreGraphics"
 +        PRIVATE "-framework CoreMedia"
 +        PRIVATE "-framework CoreVideo"
 +        PRIVATE "-framework Foundation"
 +        PRIVATE "-framework IOKit"
++        PRIVATE "-framework ImageIO"
 +        PRIVATE "-framework Metal"
 +        PRIVATE "-framework SystemConfiguration"
 +        PRIVATE "-framework VideoToolbox"

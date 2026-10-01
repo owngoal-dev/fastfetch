@@ -1,5 +1,4 @@
 diff --git a/src/detection/chassis/chassis_apple.c b/src/detection/chassis/chassis_apple.c
-index b5a041d..8ac3d3d 100644
 --- a/src/detection/chassis/chassis_apple.c
 +++ b/src/detection/chassis/chassis_apple.c
 @@ -1,6 +1,8 @@
@@ -26,13 +25,12 @@ index b5a041d..8ac3d3d 100644
          ffStrbufSetStatic(&result->type, "Laptop");
      } else if (ffStrbufStartsWithS(&host.name, "Mac mini ") ||
 diff --git a/src/detection/cpu/cpu.c b/src/detection/cpu/cpu.c
-index a796175..6680d5c 100644
 --- a/src/detection/cpu/cpu.c
 +++ b/src/detection/cpu/cpu.c
-@@ -32,7 +32,37 @@ const char* ffDetectCPU(const FFCPUOptions* options, FFCPUResult* cpu) {
+@@ -32,7 +32,33 @@ const char* ffDetectCPU(const FFCPUOptions* options, FFCPUResult* cpu) {
  
  const char* ffCPUAppleCodeToName(uint32_t code) {
-     // https://github.com/AsahiLinux/docs/wiki/Codenames
+     // https://github.com/AsahiLinux/docs/blob/main/docs/hw/soc/soc-codenames.md
 +    // iPhone/iPad SoCs: https://theapplewiki.com/wiki/Application_Processor
      switch (code) {
 +        case 8000:
@@ -60,15 +58,10 @@ index a796175..6680d5c 100644
 +            return "Apple A16 Bionic";
 +        case 8130:
 +            return "Apple A17 Pro";
-+        case 8140:
-+            return "Apple A18";
-+        case 8150:
-+            return "Apple A18 Pro";
          case 8103:
              return "Apple M1";
          case 6000:
 diff --git a/src/detection/cpu/cpu_apple.c b/src/detection/cpu/cpu_apple.c
-index bce7d55..1b6bebb 100644
 --- a/src/detection/cpu/cpu_apple.c
 +++ b/src/detection/cpu/cpu_apple.c
 @@ -3,6 +3,11 @@
@@ -97,7 +90,6 @@ index bce7d55..1b6bebb 100644
      ffSysctlGetString("machdep.cpu.vendor", &cpu->vendor);
      cpu->packages = (uint16_t) ffSysctlGetInt("hw.packages", 1);
 diff --git a/src/detection/gpu/gpu_apple.c b/src/detection/gpu/gpu_apple.c
-index f3775bc..7140d4f 100644
 --- a/src/detection/gpu/gpu_apple.c
 +++ b/src/detection/gpu/gpu_apple.c
 @@ -3,6 +3,10 @@
@@ -165,7 +157,6 @@ index f3775bc..7140d4f 100644
          gpu->temperature = options->temp ? detectGpuTemp(&gpu->name) : FF_GPU_TEMP_UNSET;
  
 diff --git a/src/detection/gpu/gpu_apple.m b/src/detection/gpu/gpu_apple.m
-index 9596dbe..3cceebf 100644
 --- a/src/detection/gpu/gpu_apple.m
 +++ b/src/detection/gpu/gpu_apple.m
 @@ -1,7 +1,9 @@
@@ -208,7 +199,7 @@ index 9596dbe..3cceebf 100644
      // Metal.framework is statically linked into the application,
      // so `MTLCopyAllDevices` is always available, or the application will not start.
      for (id<MTLDevice> device in MTLCopyAllDevices()) {
-@@ -70,7 +84,9 @@ const char* ffGpuDetectMetal(FFlist* gpus) {
+@@ -68,7 +82,9 @@ const char* ffGpuDetectMetal(FFlist* gpus) {
          }
  
          gpu->type = device.hasUnifiedMemory ? FF_GPU_TYPE_INTEGRATED : FF_GPU_TYPE_DISCRETE;
@@ -218,7 +209,7 @@ index 9596dbe..3cceebf 100644
  
          if (device.hasUnifiedMemory && device.recommendedMaxWorkingSetSize > 0) {
              gpu->shared.total = device.recommendedMaxWorkingSetSize;
-@@ -78,4 +94,5 @@ const char* ffGpuDetectMetal(FFlist* gpus) {
+@@ -76,4 +92,5 @@ const char* ffGpuDetectMetal(FFlist* gpus) {
  #endif
      }
      return nullptr;
