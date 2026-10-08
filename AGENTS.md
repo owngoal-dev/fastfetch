@@ -1,8 +1,8 @@
 # fastfetch — Agent Notes
 
 [fastfetch](https://github.com/fastfetch-cli/fastfetch) — the neofetch-like
-system information tool — built for jailbroken iOS 15+ and installed as
-`fastfetch`, for both **roothide** and **rootless** bootstraps.
+system information tool — built for iOS 15+ on custom firmware and installed
+as `fastfetch`, for both **roothide** and **rootless** bootstraps.
 
 This repository holds **no application source**. It fetches fastfetch at a
 pinned commit, applies `patches/`, cross-compiles with CMake against the

@@ -1,7 +1,7 @@
 # fastfetch
 
 [fastfetch](https://github.com/fastfetch-cli/fastfetch) — the neofetch-like
-system information tool — built for jailbroken iOS and installed as
+system information tool — built for iOS on custom firmware and installed as
 `fastfetch`. One arm64 build, packaged for both **roothide** and **rootless**
 bootstraps.
 

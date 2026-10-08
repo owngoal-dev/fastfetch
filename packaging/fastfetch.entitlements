@@ -4,7 +4,7 @@
   fastfetch is a command-line tool: it is launched from a shell, walks the
   process tree to find that shell and terminal, reads the IORegistry, and reads
   files all over the bootstrap. Three entitlements make that work on a
-  jailbroken device:
+  device running custom firmware:
 
   platform-application
       Marks the binary as a platform binary. An ad-hoc signed executable

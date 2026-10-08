@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
-# Install one .deb onto a jailbroken device over SSH and smoke-test it.
+# Install one .deb over SSH onto a device running custom firmware and
+# smoke-test it.
 #
 #   DEVICE_HOST  default 127.0.0.1
 #   DEVICE_PORT  default 4422
