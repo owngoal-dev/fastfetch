@@ -1,4 +1,4 @@
-# fastfetch — fastfetch packaged for iOS on custom firmware.
+# fastfetch — fastfetch packaged for jailbroken iOS.
 #
 # Every step is a script under scripts/ so the GitHub Actions workflow and a
 # local checkout run the same code. This makefile only wires them together and
@@ -57,7 +57,7 @@ endif
 all: debs
 
 help:
-	@echo "fastfetch $(PACKAGE_VERSION) — fastfetch for iOS on custom firmware"
+	@echo "fastfetch $(PACKAGE_VERSION) — fastfetch for jailbroken iOS"
 	@echo "upstream: $(UPSTREAM_REPO) @ $(UPSTREAM_REF)"
 	@echo "target:   $(ARCH)-apple-ios$(MIN_IOS)"
 	@echo
