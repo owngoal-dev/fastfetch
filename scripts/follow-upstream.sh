@@ -31,6 +31,8 @@ case "${1:-}" in
 esac
 
 repository_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+# Unattended refreshes accept patch(1)'s default fuzz, less than a hand rebase (3).
+AUTO_FUZZ="${AUTO_FUZZ:-2}"
 # shellcheck source=../configuration/upstream.env
 source "$repository_root/configuration/upstream.env"
 
@@ -142,6 +144,15 @@ echo "pinned UPSTREAM_REF=$upstream_sha"
 echo "set version $upstream_version"
 
 # Cheap validation: fetch + apply patches. Does not cross-compile.
-make -C "$repository_root" source
+# Upstream often only shifts context (a new include, a reflowed line). Then a
+# low-fuzz rebase refreshes patches/ in the same commit; a real conflict still
+# stops here, and release.yml's cross-compile checks whatever was refreshed.
+if ! make -C "$repository_root" source; then
+    echo "patches/ do not apply exactly to $upstream_tag; trying a fuzz $AUTO_FUZZ rebase"
+    FUZZ="$AUTO_FUZZ" "$repository_root/scripts/rebase-patches.sh" "$upstream_sha"
+    "$repository_root/scripts/rebase-patches.sh" "$upstream_sha" --write
+    make -C "$repository_root" source
+    echo "refreshed patches/ for $upstream_tag"
+fi
 
 echo "ready to tag v$upstream_version"

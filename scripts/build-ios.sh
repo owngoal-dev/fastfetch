@@ -69,6 +69,13 @@ mkdir -p "$empty_pkgconfig"
 export PKG_CONFIG_LIBDIR="$empty_pkgconfig"
 unset PKG_CONFIG_PATH
 
+# Every translation unit sees <TargetConditionals.h> and the SoC-name helper
+# (patches/0002), so the iOS hunks in upstream files carry no #include lines:
+# upstream reshuffles its include lists often, and each one was a conflict.
+chip_header="$(cd -- "$src_dir" && pwd -P)/src/common/apple/chip_ios.h"
+[[ -f "$chip_header" ]] || { echo "error: $chip_header is missing; patches/ not applied" >&2; exit 66; }
+prefix_flags="-include TargetConditionals.h -include $chip_header"
+
 build_dir="$scratch_dir/build"
 cmake -S "$src_dir" -B "$build_dir" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
@@ -77,8 +84,8 @@ cmake -S "$src_dir" -B "$build_dir" -G Ninja \
     -DCMAKE_OSX_DEPLOYMENT_TARGET="$MIN_IOS" \
     -DCMAKE_OSX_SYSROOT=iphoneos \
     -DCMAKE_MACOSX_BUNDLE=OFF \
-    -DCMAKE_C_FLAGS="-isystem $shim" \
-    -DCMAKE_OBJC_FLAGS="-isystem $shim" \
+    -DCMAKE_C_FLAGS="-isystem $shim $prefix_flags" \
+    -DCMAKE_OBJC_FLAGS="-isystem $shim $prefix_flags" \
     -DBUILD_FLASHFETCH=OFF \
     -DBUILD_TESTS=OFF \
     -DENABLE_WORDEXP=OFF \

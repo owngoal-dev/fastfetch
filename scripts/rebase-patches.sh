@@ -38,6 +38,9 @@ source "$repository_root/configuration/upstream.env"
 : "${UPSTREAM_REPO:?}"
 
 work_dir="$repository_root/build/rebase"
+# Context lines patch(1) may ignore per hunk; follow-upstream.sh lowers it.
+fuzz="${FUZZ:-3}"
+[[ "$fuzz" =~ ^[0-3]$ ]] || { echo "error: FUZZ must be 0-3" >&2; exit 64; }
 patches=("$repository_root"/patches/*.patch)
 [[ -f "${patches[0]}" ]] || { echo "no patches/ to rebase" >&2; exit 65; }
 
@@ -58,8 +61,8 @@ if [[ "$mode" == "apply" ]]; then
     failed=0
     for patch_file in "${patches[@]}"; do
         name="$(basename "$patch_file")"
-        if output="$(patch -d "$work_dir" -p1 -F3 --no-backup-if-mismatch -i "$patch_file" 2>&1)"; then
-            if grep -q 'offset\|fuzz' <<<"$output"; then
+        if output="$(patch -d "$work_dir" -p1 -F"$fuzz" --no-backup-if-mismatch -i "$patch_file" 2>&1)"; then
+            if grep -qE 'offset|fuzz' <<<"$output"; then
                 echo "$name: applied with offsets"
             else
                 echo "$name: clean"
@@ -95,7 +98,9 @@ fi
 git -C "$work_dir" add -A
 for patch_file in "${patches[@]}"; do
     name="$(basename "$patch_file")"
-    mapfile -t files < <(sed -n 's|^diff --git a/\(.*\) b/.*|\1|p' "$patch_file")
+    files=()
+    while IFS= read -r file; do files+=("$file"); done \
+        < <(sed -n 's|^diff --git a/\(.*\) b/.*|\1|p' "$patch_file")
     git -C "$work_dir" diff --cached -- "${files[@]}" | grep -v '^index ' >"$patch_file" || true
     if [[ ! -s "$patch_file" ]]; then
         echo "error: $name came out empty; its changes are gone from build/rebase" >&2

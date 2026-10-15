@@ -1,7 +1,7 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1086,6 +1086,49 @@ elseif(APPLE)
+@@ -1128,6 +1128,49 @@ elseif(APPLE)
              src/detection/physicalmemory/physicalmemory_apple.m
          )
      endif()
@@ -51,7 +51,7 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
  elseif(WIN32)
      list(APPEND LIBFASTFETCH_SRC
          src/common/impl/io_windows.c
-@@ -1933,6 +1976,20 @@ if(LINUX)
+@@ -1984,6 +2027,20 @@ if(LINUX)
              )
          endif()
      endif()

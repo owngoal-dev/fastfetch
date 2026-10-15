@@ -19,30 +19,6 @@ diff --git a/src/common/apple/osascript.m b/src/common/apple/osascript.m
      return true;
 +#endif
  }
-diff --git a/src/detection/opencl/opencl.c b/src/detection/opencl/opencl.c
---- a/src/detection/opencl/opencl.c
-+++ b/src/detection/opencl/opencl.c
-@@ -1,7 +1,7 @@
- #include "detection/opencl/opencl.h"
- #include "detection/gpu/gpu.h"
- 
--#if !defined(FF_HAVE_OPENCL) && defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_15)
-+#if !defined(FF_HAVE_OPENCL) && defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_15) && __has_include(<OpenCL/cl.h>)
-     #define FF_HAVE_OPENCL 1
- #endif
- 
-diff --git a/src/detection/opengl/opengl_shared.c b/src/detection/opengl/opengl_shared.c
---- a/src/detection/opengl/opengl_shared.c
-+++ b/src/detection/opengl/opengl_shared.c
-@@ -5,7 +5,7 @@
- 
- #if __has_include(<GL/gl.h>)
-     #include <GL/gl.h>
--#elif __APPLE__
-+#elif __has_include(<OpenGL/gl.h>) // macOS; the iOS SDK has no OpenGL
-     #define GL_SILENCE_DEPRECATION 1
-     #include <OpenGL/gl.h>
- #else
 diff --git a/src/detection/gamepad/gamepad_apple.m b/src/detection/gamepad/gamepad_apple.m
 --- a/src/detection/gamepad/gamepad_apple.m
 +++ b/src/detection/gamepad/gamepad_apple.m
@@ -106,7 +82,7 @@ diff --git a/src/detection/gamepad/gamepad_apple.m b/src/detection/gamepad/gamep
      FFGamepadDevice* device = FF_LIST_ADD(FFGamepadDevice, *ctx->devices);
      ffStrbufInit(&device->serial);
      ffStrbufInit(&device->name);
-@@ -306,7 +317,9 @@ const char* ffDetectGamepad(FFlist* devices /* List of FFGamepadDevice */) {
+@@ -306,7 +317,9 @@ static void enumSet(IOHIDDeviceRef value, FFFindGamepadContext* ctx) {
      // a reason to answer -- see `anyDeviceIsClaimedByGameController()`.
      FFFindGamepadContext ctx = {
          .devices = devices,
@@ -116,3 +92,27 @@ diff --git a/src/detection/gamepad/gamepad_apple.m b/src/detection/gamepad/gamep
      };
  
      for (id value in set) {
+diff --git a/src/detection/opencl/opencl.c b/src/detection/opencl/opencl.c
+--- a/src/detection/opencl/opencl.c
++++ b/src/detection/opencl/opencl.c
+@@ -1,7 +1,7 @@
+ #include "detection/opencl/opencl.h"
+ #include "detection/gpu/gpu.h"
+ 
+-#if !defined(FF_HAVE_OPENCL) && defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_15)
++#if !defined(FF_HAVE_OPENCL) && defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_15) && __has_include(<OpenCL/cl.h>)
+     #define FF_HAVE_OPENCL 1
+ #endif
+ 
+diff --git a/src/detection/opengl/opengl_shared.c b/src/detection/opengl/opengl_shared.c
+--- a/src/detection/opengl/opengl_shared.c
++++ b/src/detection/opengl/opengl_shared.c
+@@ -5,7 +5,7 @@
+ 
+ #if __has_include(<GL/gl.h>)
+     #include <GL/gl.h>
+-#elif __APPLE__
++#elif __has_include(<OpenGL/gl.h>) // macOS; the iOS SDK has no OpenGL
+     #define GL_SILENCE_DEPRECATION 1
+     #include <OpenGL/gl.h>
+ #else

@@ -1,6 +1,5 @@
 diff --git a/src/common/apple/chip_ios.c b/src/common/apple/chip_ios.c
 new file mode 100644
-index 0000000..f82c020
 --- /dev/null
 +++ b/src/common/apple/chip_ios.c
 @@ -0,0 +1,44 @@
@@ -50,19 +49,20 @@ index 0000000..f82c020
 +}
 diff --git a/src/common/apple/chip_ios.h b/src/common/apple/chip_ios.h
 new file mode 100644
-index 0000000..ace299c
 --- /dev/null
 +++ b/src/common/apple/chip_ios.h
-@@ -0,0 +1,6 @@
+@@ -0,0 +1,9 @@
 +#pragma once
 +
-+#include "fastfetch.h"
++// Force-included into every iOS translation unit by scripts/build-ios.sh, with
++// <TargetConditionals.h>, so the iOS hunks in upstream files carry no #include
++// lines of their own. Keep it self-contained.
++struct FFstrbuf;
 +
 +// Marketing name of the SoC, e.g. "Apple A12Z Bionic". Empty if unknown.
-+const char* ffAppleChipName(FFstrbuf* result);
++const char* ffAppleChipName(struct FFstrbuf* result);
 diff --git a/src/detection/displayserver/displayserver_ios.c b/src/detection/displayserver/displayserver_ios.c
 new file mode 100644
-index 0000000..96a1937
 --- /dev/null
 +++ b/src/detection/displayserver/displayserver_ios.c
 @@ -0,0 +1,64 @@
@@ -132,7 +132,6 @@ index 0000000..96a1937
 +}
 diff --git a/src/detection/opengl/opengl_ios.c b/src/detection/opengl/opengl_ios.c
 new file mode 100644
-index 0000000..e308bd8
 --- /dev/null
 +++ b/src/detection/opengl/opengl_ios.c
 @@ -0,0 +1,5 @@
@@ -143,7 +142,6 @@ index 0000000..e308bd8
 +}
 diff --git a/src/detection/os/os_ios.m b/src/detection/os/os_ios.m
 new file mode 100644
-index 0000000..f90d3c1
 --- /dev/null
 +++ b/src/detection/os/os_ios.m
 @@ -0,0 +1,32 @@
@@ -181,7 +179,6 @@ index 0000000..f90d3c1
 +}
 diff --git a/src/detection/packages/packages_ios.c b/src/detection/packages/packages_ios.c
 new file mode 100644
-index 0000000..b194853
 --- /dev/null
 +++ b/src/detection/packages/packages_ios.c
 @@ -0,0 +1,42 @@

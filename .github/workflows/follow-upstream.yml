@@ -74,11 +74,15 @@ jobs:
           set -euo pipefail
           git config user.name "bot"
           git config user.email "bot@owngoal.dev"
-          git add configuration/upstream.env configuration/version.txt
+          git add configuration/upstream.env configuration/version.txt patches/
+          refreshed=""
+          if ! git diff --cached --quiet -- patches/; then
+            refreshed="patches/ refreshed against the new context."
+          fi
           git commit -m "Bump upstream to ${new_version}
 
           fastfetch-cli/fastfetch ${new_ref}
-          "
+          ${refreshed}"
           git tag "v${new_version}"
           git push origin HEAD:main
           git push origin "v${new_version}"

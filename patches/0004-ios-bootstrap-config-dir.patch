@@ -1,16 +1,7 @@
 diff --git a/src/common/impl/FFPlatform_unix.c b/src/common/impl/FFPlatform_unix.c
-index 92f0e86..ad21700 100644
 --- a/src/common/impl/FFPlatform_unix.c
 +++ b/src/common/impl/FFPlatform_unix.c
-@@ -12,6 +12,7 @@
- #include <paths.h>
- 
- #ifdef __APPLE__
-+    #include <TargetConditionals.h>
-     #include <mach-o/dyld.h>
-     #include <sys/sysctl.h>
- #elif defined(__FreeBSD__) || defined(__NetBSD__)
-@@ -215,6 +216,20 @@ static void getConfigDirs(FFPlatform* platform) {
+@@ -259,6 +259,20 @@ static void getConfigDirs(FFPlatform* platform) {
      ffPlatformPathAddAbsolute(&platform->configDirs, FASTFETCH_TARGET_DIR_ETC "/xdg/");
  #endif
  

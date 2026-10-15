@@ -79,6 +79,13 @@ Upstream has no iOS target; `if(APPLE)` means macOS. The port is six patches:
 - `0006-ios-portable-fallbacks` — no-op font, media, sound and wallpaper
   detectors removed by upstream 2.69.0, with the current function signatures.
 
+Patches into upstream files add no `#include` lines. `build-ios.sh`
+force-includes `<TargetConditionals.h>` and the self-contained
+`common/apple/chip_ios.h` into every translation unit, because upstream edits
+its include lists often (2.70.0 added `common/debug.h` everywhere) and every
+include hunk was a conflict. Keep new hunks inside function bodies, away from
+include lists, and keep `chip_ios.h` free of project headers.
+
 Everything else Apple-flavoured (memory, battery, power adapter, disks,
 network, processes, host name via `IODeviceTree:/product`, terminal/shell
 walk) compiles and links unchanged — the iPhoneOS SDK just omits the headers.
@@ -147,7 +154,9 @@ in `iphoneos-arm64.deb` / `iphoneos-arm64e.deb`; a `SHA256SUMS` of bare names.
 
 `Follow upstream` runs every day at 00:00 UTC: pin to the newest stable
 `fastfetch-cli/fastfetch` `X.Y.Z` release, `make source` to prove `patches/`
-still apply, then commit and tag `vX.Y.Z` as `bot <bot@owngoal.dev>` and
+still apply (if only context moved, a fuzz-2 `rebase-patches.sh` run
+refreshes `patches/` in the same commit; a reject still fails the run and
+needs a hand rebase), then commit and tag `vX.Y.Z` as `bot <bot@owngoal.dev>` and
 dispatch `Release` on that tag (`gh workflow run release.yml --ref vX.Y.Z`):
 a tag pushed with the workflow's own token never fires a push-triggered
 workflow, and `workflow_dispatch` is the documented exception.
