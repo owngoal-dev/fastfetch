@@ -62,7 +62,7 @@ diff --git a/src/detection/gamepad/gamepad_apple.m b/src/detection/gamepad/gamep
  // The GameController framework's own devices, and how many of them there were. `set` is the IOKit
  // side, used only to borrow the serial -- see `findHIDDeviceForController()`.
  static uint32_t findGameControllerDevices(FFlist* devices, NSSet* set) {
-@@ -244,7 +250,10 @@ static bool anyDeviceIsClaimedByGameController(NSSet* set) {
+@@ -250,7 +256,10 @@ static bool anyDeviceIsClaimedByGameController(NSSet* set) {
      return false;
  }
  
@@ -72,17 +72,17 @@ diff --git a/src/detection/gamepad/gamepad_apple.m b/src/detection/gamepad/gamep
 +#if TARGET_OS_OSX
      // A device the framework owns is already in the list under its own name; see the note at the
      // top for why this is conditional on the framework having contributed anything at all.
-     if (ctx->gameControllerCount > 0) {
-@@ -255,6 +264,8 @@ static void enumSet(IOHIDDeviceRef value, FFFindGamepadContext* ctx) {
-         }
+ #ifdef MAC_OS_VERSION_11_0
+@@ -263,6 +272,8 @@ static void enumSet(IOHIDDeviceRef value, FFFindGamepadContext* ctx) {
      }
+ #endif
  
 +#endif // TARGET_OS_OSX
 +
      FFGamepadDevice* device = FF_LIST_ADD(FFGamepadDevice, *ctx->devices);
      ffStrbufInit(&device->serial);
      ffStrbufInit(&device->name);
-@@ -306,7 +317,9 @@ static void enumSet(IOHIDDeviceRef value, FFFindGamepadContext* ctx) {
+@@ -314,7 +325,9 @@ const char* ffDetectGamepad(FFlist* devices /* List of FFGamepadDevice */) {
      // a reason to answer -- see `anyDeviceIsClaimedByGameController()`.
      FFFindGamepadContext ctx = {
          .devices = devices,

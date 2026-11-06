@@ -149,7 +149,7 @@ diff --git a/src/detection/gpu/gpu_apple.m b/src/detection/gpu/gpu_apple.m
      NSMutableArray* arr = NSMutableArray.new;
      FF_LIST_FOR_EACH (FFGPUResult, x, *gpus) {
          [arr addObject:@(x->driver.chars)];
-@@ -29,9 +35,17 @@
+@@ -29,9 +35,17 @@ const char* ffGpuDetectDriverVersion(FFlist* gpus) {
          }
      }
      return nullptr;
@@ -167,7 +167,7 @@ diff --git a/src/detection/gpu/gpu_apple.m b/src/detection/gpu/gpu_apple.m
      // Metal.framework is statically linked into the application,
      // so `MTLCopyAllDevices` is always available, or the application will not start.
      for (id<MTLDevice> device in MTLCopyAllDevices()) {
-@@ -68,7 +82,9 @@
+@@ -68,7 +82,9 @@ const char* ffGpuDetectMetal(FFlist* gpus) {
          }
  
          gpu->type = device.hasUnifiedMemory ? FF_GPU_TYPE_INTEGRATED : FF_GPU_TYPE_DISCRETE;
@@ -177,7 +177,7 @@ diff --git a/src/detection/gpu/gpu_apple.m b/src/detection/gpu/gpu_apple.m
  
          if (device.hasUnifiedMemory && device.recommendedMaxWorkingSetSize > 0) {
              gpu->shared.total = device.recommendedMaxWorkingSetSize;
-@@ -76,4 +92,5 @@
+@@ -76,4 +92,5 @@ const char* ffGpuDetectMetal(FFlist* gpus) {
  #endif
      }
      return nullptr;
